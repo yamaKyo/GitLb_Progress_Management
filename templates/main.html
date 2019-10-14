@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+        content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, width=device-width">
+    <title>論文実績管理</title>
+    <link rel="stylesheet" href="static/css/skyblue.css">
+</head>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+<script type="text/javascript">
+
+
+function request_count() {
+    var req = new XMLHttpRequest();
+        req.onreadystatechange = function () {
+            if (req.readyState == 4) { // 通信の完了時
+                if (req.status == 200) { // 通信の成功時
+                    results = eval(req.responseText)
+                    var names = [];
+                    var values = [];
+                    if (results != null){
+                        results.forEach(
+                            function (result){
+                                names.push(result.name)
+                                values.push(result.count)
+                            }
+                        );
+                    }
+                    var ctx = document.getElementById("progress_bar_chart");
+                    DrawGraph(names, values, ctx)
+                    
+                }
+            }
+        }
+        var start_date = document.getElementById("start_date").value;
+        var end_date = document.getElementById("end_date").value;
+        var url = '/get_completed_issue_num_per_user'
+        var params = []
+        if (start_date != ""){
+            params.push('start=' + '"' + start_date + '"');
+        }
+        if(end_date != ""){
+            params.push('end='+'"' + end_date + '"');
+        }
+        req.open('GET', url+'?'+params.join('&'), true);
+        req.send(null);
+}
+
+function DrawGraph(names, values, ctx){
+    var myBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: names,
+            datasets: [
+            {
+                label: '論文数',
+                data: values,
+                backgroundColor: "rgba(219,39,91,0.5)"
+            }
+            ]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {            
+                        suggestedMin: 0,
+                        stepSize: 1,
+                        callback: function(value, index, values){
+                            return  value;
+                        }
+                    }
+                }]
+            }
+        }
+    });
+}
+
+function SetDate(element, value){
+    if (value != ""){
+        element.value=value;
+    }else{
+        var today = new Date();
+        today.setDate(today.getDate());
+        var yyyy = today.getFullYear();
+        var mm = ("0"+(today.getMonth()+1)).slice(-2);
+        var dd = ("0"+today.getDate()).slice(-2);
+        element.value=yyyy+'-'+mm+'-'+dd;
+    }
+}
+
+window.onload = function() {
+    request_count()
+};
+ 
+</script>
+
+<body>
+    <div class="bg-dark padding-y-20">
+        <div class="container text-center">
+            <h1>Issue実績管理システム</h1>
+        </div>
+    </div>
+    <div class="container">
+                <br />
+                期間：<input id="start_date"  type="date"/>〜<input id="end_date"  type="date"/>　<a onclick='request_count()' class="btn">Show</a>
+
+                <br />
+                <canvas id="progress_bar_chart"></canvas>              
+    </div>
+</body>
